@@ -5,7 +5,8 @@ public class Movement : MonoBehaviour
     public Vector2 inputVec;
     public float moveSpeed = 7f;
     public float dashPower = 12f;
-
+    public float dashCoolTime = 0.2f;
+    public float dashTime = 0.3f;
     bool canDash = true;
     bool isDash = false;
     
@@ -38,12 +39,12 @@ public class Movement : MonoBehaviour
                     new Vector2(dashPower, rigid.linearVelocity.y);
             }
 
-            Invoke("EndDash", 0.2f);
-            Invoke("ResetDash", 0.3f);
+            Invoke("EndDash", dashCoolTime);
+            Invoke("ResetDash", dashTime);
         }
     }
     
-        void FixedUpdate()
+    void FixedUpdate()
     {
         if (isDash) return;
 
