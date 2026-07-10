@@ -55,6 +55,24 @@ public class ScreenManager : MonoBehaviour
     }
 
     /// <summary>
+    /// 스택을 통째로 비우고 screen을 유일한 루트로 앉힌다.
+    /// 로그인/로그아웃처럼 "스택의 루트 자체가 바뀌는" 전환에 쓴다 — Push로 쌓으면
+    /// 예전 루트(로그인 화면 등)가 스택 밑에 남아서 Back()이 엉뚱한 곳으로 빠진다.
+    /// </summary>
+    public void SetRoot(UIScreen screen)
+    {
+        if (screen == null) return;
+
+        PopupManager.Instance?.CloseAll();
+
+        while (_stack.Count > 0)
+            _stack.Pop().OnExit();
+
+        screen.OnEnter();
+        _stack.Push(screen);
+    }
+
+    /// <summary>
     /// 한 단계 뒤로. 처리했으면 true.
     /// 루트에서는 해당 화면의 OnBackAtRoot() 에 위임한다.
     /// </summary>

@@ -1,0 +1,5 @@
+{
+  "region": "us-east-1",
+  "clientId": "여기에 Cognito App Client ID",
+  "saveApiBaseUrl": "여기에 API Gateway Invoke URL"
+}
