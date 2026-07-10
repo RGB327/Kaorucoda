@@ -9,6 +9,14 @@ public class WeaponData : ScriptableObject
     public string weaponName = "New Weapon";
     public WeaponAttackData basicAttack = new();
     public WeaponAttackData secondaryAttack = new();
+
+    [Header("표시/연출 (그림·애니메이션 준비되면 채우기)")]
+    [Tooltip("플레이어가 들고 있는 무기 이미지. WeaponHolder의 SpriteRenderer에 적용됨.")]
+    public Sprite icon;
+
+    [Tooltip("이 무기 전용 공격 모션. 비워두면 Player의 기본 Animator Controller 그대로 사용 — " +
+             "즉 그림/애니메이션 없이도 지금 당장 문제없이 동작한다.")]
+    public AnimatorOverrideController animatorOverride;
 }
 
 [Serializable]

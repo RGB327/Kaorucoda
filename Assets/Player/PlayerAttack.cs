@@ -6,12 +6,22 @@ public class PlayerAttack : MonoBehaviour
     public WeaponData weapon;
 
     private PlayerStats stats;
+    private PlayerWeaponVisual visual;
     private bool canBasicAttack = true;
     private bool canSecondaryAttack = true;
 
     void Start()
     {
         stats = GetComponent<PlayerStats>();
+        visual = GetComponent<PlayerWeaponVisual>();
+        visual?.EquipWeapon(weapon);
+    }
+
+    /// <summary>무기 교체 시 사용 (인벤토리/드랍 획득 등 나중에 붙을 시스템이 호출할 자리).</summary>
+    public void EquipWeapon(WeaponData newWeapon)
+    {
+        weapon = newWeapon;
+        visual?.EquipWeapon(weapon);
     }
 
     void Update()
@@ -28,6 +38,9 @@ public class PlayerAttack : MonoBehaviour
     void TriggerAttack(WeaponAttackData attackData, bool isBasic)
     {
         Attack(attackData);
+
+        if (isBasic) visual?.PlayBasicAttack();
+        else visual?.PlaySecondaryAttack();
 
         float cooldown = ComputeCooldown(attackData.baseCooldown);
         if (isBasic)
