@@ -6,6 +6,7 @@ public class MainMenuScreen : UIScreen
 {
     [Header("이동할 화면")]
     [SerializeField] private AchievementScreen achievementScreen;
+    [SerializeField] private LoginScreen loginScreen;
 
     [Header("씬에 미리 배치된 팝업 (PopupCanvas 아래)")]
     [SerializeField] private SettingsPopup settingsPopup;
@@ -35,6 +36,12 @@ public class MainMenuScreen : UIScreen
     public void OnQuitClick()
     {
         ShowQuitConfirm();
+    }
+
+    public void OnLogoutClick()
+    {
+        AuthManager.Instance.Logout();
+        ScreenManager.Instance.SetRoot(loginScreen);
     }
 
     // --- 루트에서의 뒤로가기 ---
