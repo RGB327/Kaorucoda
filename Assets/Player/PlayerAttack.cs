@@ -1,52 +1,83 @@
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 public class PlayerAttack : MonoBehaviour
 {
-    public int damage = 20;
-    public float attackRange = 2f;
-    public float attackCoolTime = 0.5f;
+    public WeaponData weapon;
 
-    bool canAttack = true;
+    private PlayerStats stats;
+    private bool canBasicAttack = true;
+    private bool canSecondaryAttack = true;
+
+    void Start()
+    {
+        stats = GetComponent<PlayerStats>();
+    }
 
     void Update()
     {
-        AttackInput();
+        if (Keyboard.current == null) return;
+
+        if (Keyboard.current.qKey.wasPressedThisFrame && canBasicAttack)
+            TriggerAttack(weapon.basicAttack, isBasic: true);
+
+        if (Keyboard.current.eKey.wasPressedThisFrame && canSecondaryAttack)
+            TriggerAttack(weapon.secondaryAttack, isBasic: false);
     }
 
-    void AttackInput()
+    void TriggerAttack(WeaponAttackData attackData, bool isBasic)
     {
-        if (Input.GetKeyDown(KeyCode.Q) && canAttack)
-        {
-            Attack();
+        Attack(attackData);
 
-            canAttack = false;
-            Invoke("ResetAttack", attackCoolTime);
+        float cooldown = ComputeCooldown(attackData.baseCooldown);
+        if (isBasic)
+        {
+            canBasicAttack = false;
+            Invoke(nameof(ResetBasicAttack), cooldown);
+        }
+        else
+        {
+            canSecondaryAttack = false;
+            Invoke(nameof(ResetSecondaryAttack), cooldown);
         }
     }
 
-    void Attack()
-    {
-        FindEnemy();
-    }
-
-    void FindEnemy()
+    void Attack(WeaponAttackData attackData)
     {
         GameObject[] enemies = GameObject.FindGameObjectsWithTag("Enemy");
 
         foreach (GameObject enemy in enemies)
         {
-            float distance = Vector2.Distance(transform.position,
-                                              enemy.transform.position);
+            float distance = Vector2.Distance(transform.position, enemy.transform.position);
 
-            if (distance <= attackRange)
+            if (distance <= attackData.range)
             {
-                enemy.GetComponent<EnemyHP>().TakeDamage(damage);
+                enemy.GetComponent<EnemyHP>().TakeDamage(ComputeDamage(attackData));
             }
         }
     }
 
-    void ResetAttack()
+    int ComputeDamage(WeaponAttackData attackData)
     {
-        canAttack = true;
+        StatType relevantStat = attackData.damageType == DamageType.Physical
+            ? StatType.PhysicalAttack
+            : StatType.MagicAttack;
+
+        float damage = attackData.basePower + stats.GetValue(relevantStat);
+
+        if (Random.value < Mathf.Clamp01(stats.GetValue(StatType.CritChance)))
+            damage *= stats.critMultiplier;
+
+        return Mathf.RoundToInt(damage);
     }
+
+    // 무기 기본 쿨타임을 AttackSpeed 스탯(% 보너스)으로 나눠서 최종 쿨타임을 낸다.
+    float ComputeCooldown(float baseCooldown)
+    {
+        float attackSpeed = stats.GetValue(StatType.AttackSpeed);
+        return Mathf.Max(0.05f, baseCooldown / (1f + attackSpeed * 0.01f));
+    }
+
+    void ResetBasicAttack() => canBasicAttack = true;
+    void ResetSecondaryAttack() => canSecondaryAttack = true;
 }
