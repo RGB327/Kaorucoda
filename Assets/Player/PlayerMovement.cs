@@ -23,7 +23,7 @@ public class Movement : MonoBehaviour
         inputVec.x = Input.GetAxisRaw("Horizontal");
         inputVec.y = Input.GetAxisRaw("Vertical");
 
-        if (canDash && Input.GetKeyDown(KeyCode.LeftShift))
+        if (canDash && Input.GetKeyDown(KeyCode.Space))
         {
             canDash = false;
             isDash = true;
