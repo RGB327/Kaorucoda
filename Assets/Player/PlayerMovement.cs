@@ -9,7 +9,7 @@ public class Movement : MonoBehaviour
     public float dashTime = 0.3f;
     bool canDash = true;
     bool isDash = false;
-    
+
     Rigidbody2D rigid;
     SpriteRenderer spriteRenderer;
     void Start()
@@ -39,11 +39,11 @@ public class Movement : MonoBehaviour
                     new Vector2(dashPower, rigid.linearVelocity.y);
             }
 
-            Invoke("EndDash", dashCoolTime);
-            Invoke("ResetDash", dashTime);
+            Invoke("EndDash", 0.2f);
+            Invoke("ResetDash", 0.3f);
         }
     }
-    
+
     void FixedUpdate()
     {
         if (isDash) return;
