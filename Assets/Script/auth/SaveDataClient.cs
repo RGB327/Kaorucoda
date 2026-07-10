@@ -11,14 +11,18 @@ using UnityEngine.Networking;
 /// </summary>
 public class SaveDataClient
 {
-    /// <summary>세이브를 가져온다. 신규 유저 등 세이브가 없으면 null을 돌려준다.</summary>
-    public void GetSave(Action<string> onComplete)
+    /// <summary>
+    /// 세이브를 가져온다. saveBlob은 신규 유저처럼 세이브가 없으면 null.
+    /// hadError는 "세이브가 없는 것"과 "네트워크/서버 오류로 못 가져온 것"을 구분하기 위한 값 —
+    /// true면 saveBlob=null이어도 실제로는 세이브가 있을 수 있으니 새 게임으로 넘기면 안 된다.
+    /// </summary>
+    public void GetSave(Action<string, bool> onComplete)
     {
         AuthManager.Instance.EnsureFreshAccessToken(ready =>
         {
             if (!ready)
             {
-                onComplete?.Invoke(null);
+                onComplete?.Invoke(null, true);
                 return;
             }
             AuthManager.Instance.StartCoroutine(GetSaveRoutine(onComplete));
@@ -38,7 +42,21 @@ public class SaveDataClient
         });
     }
 
-    private IEnumerator GetSaveRoutine(Action<string> onComplete)
+    /// <summary>서버에 저장된 세이브를 지운다. "삭제하기" 선택 시 사용.</summary>
+    public void DeleteSave(Action<bool> onComplete)
+    {
+        AuthManager.Instance.EnsureFreshAccessToken(ready =>
+        {
+            if (!ready)
+            {
+                onComplete?.Invoke(false);
+                return;
+            }
+            AuthManager.Instance.StartCoroutine(DeleteSaveRoutine(onComplete));
+        });
+    }
+
+    private IEnumerator GetSaveRoutine(Action<string, bool> onComplete)
     {
         string url = $"{AuthManager.Instance.SaveApiBaseUrl}/save";
         using var request = UnityWebRequest.Get(url);
@@ -48,19 +66,19 @@ public class SaveDataClient
 
         if (request.responseCode == 404)
         {
-            onComplete?.Invoke(null); // 아직 세이브가 없는 신규 계정
+            onComplete?.Invoke(null, false); // 아직 세이브가 없는 신규 계정 — 오류 아님
             yield break;
         }
 
         if (request.result != UnityWebRequest.Result.Success)
         {
             Debug.LogWarning($"[SaveDataClient] GetSave 실패: {request.responseCode} {request.error}");
-            onComplete?.Invoke(null);
+            onComplete?.Invoke(null, true);
             yield break;
         }
 
         var response = JsonUtility.FromJson<GetSaveResponse>(request.downloadHandler.text);
-        onComplete?.Invoke(response?.saveBlob);
+        onComplete?.Invoke(response?.saveBlob, false);
     }
 
     private IEnumerator PutSaveRoutine(string saveBlobJson, Action<bool> onComplete)
@@ -80,6 +98,21 @@ public class SaveDataClient
 
         if (request.result != UnityWebRequest.Result.Success)
             Debug.LogWarning($"[SaveDataClient] PutSave 실패: {request.responseCode} {request.error}");
+
+        onComplete?.Invoke(request.result == UnityWebRequest.Result.Success);
+    }
+
+    private IEnumerator DeleteSaveRoutine(Action<bool> onComplete)
+    {
+        string url = $"{AuthManager.Instance.SaveApiBaseUrl}/save";
+        using var request = UnityWebRequest.Delete(url);
+        request.downloadHandler = new DownloadHandlerBuffer();
+        request.SetRequestHeader("Authorization", $"Bearer {AuthManager.Instance.AccessToken}");
+
+        yield return request.SendWebRequest();
+
+        if (request.result != UnityWebRequest.Result.Success)
+            Debug.LogWarning($"[SaveDataClient] DeleteSave 실패: {request.responseCode} {request.error}");
 
         onComplete?.Invoke(request.result == UnityWebRequest.Result.Success);
     }
