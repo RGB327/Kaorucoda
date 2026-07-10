@@ -31,7 +31,7 @@ public class Movement : MonoBehaviour
                  - (Keyboard.current.sKey.isPressed || Keyboard.current.downArrowKey.isPressed ? 1f : 0f);
         inputVec = new Vector2(x, y);
 
-        if (canDash && Input.GetKeyDown(KeyCode.Space))
+        if (canDash && Keyboard.current.spaceKey.wasPressedThisFrame)
         {
             canDash = false;
             isDash = true;
